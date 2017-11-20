@@ -9,11 +9,15 @@
 import UIKit
 import ARKit
 
-class ARViewController: UIViewController {
+class ARViewController: UIViewController, ARNodeManagerDelegate {
 
     @IBOutlet weak var sceneView: ARSCNView!
     
-    var nodeManager = ARNodeManager()
+    @IBOutlet weak var pointsLabel: UILabel!
+    @IBOutlet weak var livesLabel: UILabel!
+    @IBOutlet weak var startButton: UIButton!
+    
+    let nodeManager = ARNodeManager()
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -21,8 +25,8 @@ class ARViewController: UIViewController {
         //add gesture recognizer
         addTapGestureToSceneView()
         
-        //create start button
-        createStartButton()
+        //show start button
+        shouldShowStartButton(true)
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -31,7 +35,7 @@ class ARViewController: UIViewController {
         let config = ARWorldTrackingConfiguration()
         sceneView.session.run(config)
         
-        nodeManager = ARNodeManager(withSceneView: sceneView)
+        nodeManager.delegate = self
     }
     
     override func viewWillDisappear(_ animated: Bool) {
@@ -45,20 +49,7 @@ class ARViewController: UIViewController {
         // Dispose of any resources that can be recreated.
     }
     
-    // MARK: AR helper methods
-    
-    func createStartButton() {
-        
-        let startButtonBox = SCNBox(width: 0.1, height: 0.1, length: 0.3, chamferRadius: 0)
-        
-        let startButtonNode = SCNNode()
-        startButtonNode.geometry = startButtonBox
-        startButtonNode.position = SCNVector3(0, 0, -0.2)
-        startButtonNode.name = ARNodeType.StartButton.rawValue
-        
-        sceneView.scene.rootNode.addChildNode(startButtonNode)
-        
-    }
+    // MARK: Gesture recognizer
     
     func addTapGestureToSceneView() {
         let tapGestureRecognizer = UITapGestureRecognizer(target: self, action: #selector(ARViewController.didTap(withGestureRecognizer:)))
@@ -66,39 +57,65 @@ class ARViewController: UIViewController {
     }
 
     @objc func didTap(withGestureRecognizer recognizer: UIGestureRecognizer) {
+        nodeManager.processTapInSceneView(sceneView: sceneView, recognizer: recognizer)
+    }
+    
+    @IBAction func beginGame(_ sender: Any) {
+        nodeManager.initializeGame()
+    }
+    
+    // MARK: Animations
+    func sceneViewFlashRed() {
         
-        let tapLocation = recognizer.location(in: sceneView)
-        let hitTestResults = sceneView.hitTest(tapLocation)
+        let redView = UIView(frame: self.view.frame)
+        redView.backgroundColor = UIColor.red
+        redView.alpha = 0.5
         
-        guard let node = hitTestResults.first?.node else {
-            return
+        DispatchQueue.main.async {
+            self.view.addSubview(redView)
         }
         
-        switch node.name {
-            case ARNodeType.StartButton.rawValue?:
-                
-                //draw all new nodes
-                node.removeFromParentNode()
-                nodeManager.createInitialNodes()
-                break
-            
-            case ARNodeType.EnemyProjectile.rawValue?:
-                
-                //update score
-                nodeManager.destroyedNodes += 1
-                
-                //remove tapped node
-                node.removeFromParentNode()
-                
-                //add new node
-                nodeManager.createEnemyNode()
-                
-                break
-            
-            default:
-                break
+        DispatchQueue.main.asyncAfter(deadline: DispatchTime.now() + 0.2, execute: {
+            redView.removeFromSuperview()
+        })
+        
+    }
+    
+    // MARK: ARNodeManagerDelegate
+    
+    func shouldShowStartButton(_ show: Bool) {
+        startButton.isHidden = !show
+    }
+    
+    func shouldUpdateScore(_ score: Int) {
+        DispatchQueue.main.async {
+            self.pointsLabel.text = "Score: " + score.description
+        }
+    }
+    
+    func shouldUpdateDamage(_ damage: Int) {
+        
+        if (damage >= 0) {
+            sceneViewFlashRed()
         }
         
+        DispatchQueue.main.async {
+            self.livesLabel.text = "Lives: " + damage.description
+        }
+    }
+    
+    func removeAllChildNodes() {
+        for node in sceneView.scene.rootNode.childNodes {
+            node.removeFromParentNode()
+        }
+    }
+
+    func returnPosition() -> float4x4 {
+        return (sceneView.session.currentFrame?.camera.transform)!
+    }
+    
+    func shouldDrawNode(_ node: SCNNode) {
+        sceneView.scene.rootNode.addChildNode(node)
     }
     
 }

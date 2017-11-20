@@ -9,28 +9,83 @@
 import Foundation
 import ARKit
 
-enum ARNodeType: String {
-    case StartButton = "startButton"
-    case EnemyProjectile = "enemyProjectile"
+protocol ARNodeManagerDelegate {
+    
+    func shouldShowStartButton(_ show: Bool)
+    func shouldUpdateScore(_ score: Int)
+    func shouldUpdateDamage(_ damage: Int)
+    func shouldDrawNode(_ node: SCNNode)
+    func removeAllChildNodes()
+    
+    func returnPosition() -> float4x4
+    
 }
 
 class ARNodeManager {
     
+    var delegate: ARNodeManagerDelegate?
+    
     var maxNodes = 5
+    var maxHits = 3
+    
     var destroyedNodes = 0
     var hitsTaken = 0
     
-    var sceneView: ARSCNView?
+    var gameOver = false
     
-    convenience init(withSceneView sceneView: ARSCNView) {
-        self.init()
+    func initializeGame() {
         
-        self.sceneView = sceneView;
+        guard let del = delegate else {
+            return
+        }
+        
+        destroyedNodes = 0
+        hitsTaken = 0
+        gameOver = false
+        
+        createInitialNodes()
+        del.shouldShowStartButton(false)
+        del.shouldUpdateScore(destroyedNodes)
+        del.shouldUpdateDamage(maxHits - hitsTaken)
+        
+    }
+    
+    func endGame() {
+        
+        guard let del = delegate else {
+            return
+        }
+        
+        gameOver = true
+        del.removeAllChildNodes()
+        del.shouldShowStartButton(true)
+        
+    }
+    
+    func processTapInSceneView(sceneView: ARSCNView, recognizer: UIGestureRecognizer) {
+        
+        let tapLocation = recognizer.location(in: sceneView)
+        let hitTestResults = sceneView.hitTest(tapLocation)
+        
+        guard let node = hitTestResults.first?.node,
+            let del = delegate else {
+            return
+        }
+        
+        //if we made it this far, we tapped an enemyNode
+        destroyedNodes += 1
+        del.shouldUpdateScore(destroyedNodes)
+        
+        node.removeFromParentNode()
+        
+        //create new enemy to replace it
+        createEnemyNode()
+
     }
     
     func createEnemyNode() {
         
-        guard let scnView = self.sceneView else {
+        guard let del = delegate else {
             return
         }
         
@@ -38,26 +93,27 @@ class ARNodeManager {
         
         let enemyNode = SCNNode()
         enemyNode.geometry = enemyBox
+        enemyNode.geometry?.firstMaterial?.diffuse.contents = UIColor.red
         enemyNode.position = getRandomPositionFromCamera()
-        enemyNode.name = ARNodeType.EnemyProjectile.rawValue
         
-        if let cameraPosition = scnView.session.currentFrame?.camera.transform.translation {
-            let destination = SCNVector3(cameraPosition)
-            self.moveNodeToPosition(node: enemyNode, position: destination)
-        }
+        let destination = SCNVector3(del.returnPosition().translation)
+        self.moveNodeToPosition(node: enemyNode, position: destination)
         
-        
-        scnView.scene.rootNode.addChildNode(enemyNode)
+        del.shouldDrawNode(enemyNode)
         
     }
     
     func createInitialNodes() {
         
-        self.createEnemyNode()
-        self.createEnemyNode()
-        self.createEnemyNode()
-        self.createEnemyNode()
-        self.createEnemyNode()
+        for index in 1...maxNodes {
+            
+            let delay = 1.0 + Double(index)
+            
+            DispatchQueue.main.asyncAfter(deadline: DispatchTime.now() + delay, execute: {
+                self.createEnemyNode()
+            })
+            
+        }
         
     }
     
@@ -73,17 +129,33 @@ class ARNodeManager {
     
     func moveNodeToPosition(node: SCNNode, position: SCNVector3) {
         
-        let moveTowardsOriginAction = SCNAction.move(to: position, duration: 10.0)
+        let moveTowardsOriginAction = SCNAction.move(to: position, duration: 8.0)
         node.runAction(moveTowardsOriginAction, completionHandler: {
-            
-            //if this node is still in the parent tree, it hit us
-            if let _ = node.parent {
-                self.hitsTaken += 1
-            }
-            
-            node.removeFromParentNode()
-            
+            self.handlePotentialHit(node: node)
         })
+        
+        let rotationAction = SCNAction.rotateBy(x: 1.0, y: 1.0, z: 1.0, duration: 1.0)
+        let infiniteRotationAction = SCNAction.repeatForever(rotationAction)
+        node.runAction(infiniteRotationAction)
+    }
+    
+    func handlePotentialHit(node: SCNNode) {
+        
+        //if this node is still in the parent tree, it hit us
+        if let _ = node.parent, let del = delegate {
+            hitsTaken += 1
+            del.shouldUpdateDamage(maxHits - hitsTaken)
+        }
+        
+        node.removeFromParentNode()
+        
+        if (maxHits - hitsTaken > 0) {
+            createEnemyNode()
+        }
+        else {
+            endGame()
+        }
+        
     }
     
 }

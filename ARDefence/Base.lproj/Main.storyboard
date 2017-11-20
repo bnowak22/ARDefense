@@ -6,6 +6,8 @@
     <dependencies>
         <deployment identifier="iOS"/>
         <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="13527"/>
+        <capability name="Alignment constraints to the first baseline" minToolsVersion="6.0"/>
+        <capability name="Constraints to layout margins" minToolsVersion="6.0"/>
         <capability name="Safe area layout guides" minToolsVersion="9.0"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
@@ -21,23 +23,57 @@
                             <arscnView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="Nep-wc-PhQ">
                                 <rect key="frame" x="0.0" y="0.0" width="834" height="1112"/>
                             </arscnView>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Points: " textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="wo2-j8-BSl" userLabel="Points Label">
+                                <rect key="frame" x="20" y="20" width="119" height="123"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="38"/>
+                                <nil key="textColor"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Lives: " textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="hFg-N4-SRG" userLabel="Lives Label">
+                                <rect key="frame" x="711" y="20" width="103" height="123"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="38"/>
+                                <nil key="textColor"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="0xU-4X-bjh" userLabel="Start Button">
+                                <rect key="frame" x="131" y="20" width="572" height="123"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="38"/>
+                                <state key="normal" title="Start"/>
+                                <connections>
+                                    <action selector="beginGame:" destination="BYZ-38-t0r" eventType="touchUpInside" id="kAB-2c-27T"/>
+                                </connections>
+                            </button>
                         </subviews>
                         <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                         <constraints>
+                            <constraint firstItem="wo2-j8-BSl" firstAttribute="leading" secondItem="8bC-Xf-vdC" secondAttribute="leadingMargin" id="6pX-hm-y19"/>
                             <constraint firstItem="Nep-wc-PhQ" firstAttribute="leading" secondItem="8bC-Xf-vdC" secondAttribute="leading" id="EZ5-jW-Wgt"/>
+                            <constraint firstItem="wo2-j8-BSl" firstAttribute="top" secondItem="6Tk-OE-BBY" secondAttribute="top" id="FhP-NZ-NXo"/>
+                            <constraint firstItem="hFg-N4-SRG" firstAttribute="trailing" secondItem="8bC-Xf-vdC" secondAttribute="trailingMargin" id="LCH-05-4aH"/>
+                            <constraint firstItem="wo2-j8-BSl" firstAttribute="bottom" secondItem="0xU-4X-bjh" secondAttribute="bottom" id="MM2-vU-eda"/>
+                            <constraint firstItem="wo2-j8-BSl" firstAttribute="baseline" secondItem="hFg-N4-SRG" secondAttribute="baseline" id="QBK-Mk-8Ig"/>
+                            <constraint firstItem="hFg-N4-SRG" firstAttribute="leading" secondItem="0xU-4X-bjh" secondAttribute="trailing" constant="8" symbolic="YES" id="e2s-0x-xZ2"/>
+                            <constraint firstItem="wo2-j8-BSl" firstAttribute="firstBaseline" secondItem="hFg-N4-SRG" secondAttribute="firstBaseline" id="hpC-xW-E9w"/>
+                            <constraint firstItem="0xU-4X-bjh" firstAttribute="centerX" secondItem="Nep-wc-PhQ" secondAttribute="centerX" id="m23-K2-e1C"/>
                             <constraint firstItem="Nep-wc-PhQ" firstAttribute="top" secondItem="8bC-Xf-vdC" secondAttribute="top" id="p7b-OF-jyi"/>
                             <constraint firstAttribute="trailing" secondItem="Nep-wc-PhQ" secondAttribute="trailing" id="taH-AJ-jxl"/>
                             <constraint firstItem="Nep-wc-PhQ" firstAttribute="bottom" secondItem="6Tk-OE-BBY" secondAttribute="bottom" id="tji-WI-AOF"/>
+                            <constraint firstItem="6Tk-OE-BBY" firstAttribute="bottom" secondItem="wo2-j8-BSl" secondAttribute="bottom" constant="969" id="vgI-hN-QQA"/>
+                            <constraint firstItem="wo2-j8-BSl" firstAttribute="top" secondItem="0xU-4X-bjh" secondAttribute="top" id="vlr-Lr-yfS"/>
+                            <constraint firstAttribute="trailing" relation="greaterThanOrEqual" secondItem="wo2-j8-BSl" secondAttribute="trailingMargin" id="vzB-EE-IV5"/>
                         </constraints>
                         <viewLayoutGuide key="safeArea" id="6Tk-OE-BBY"/>
                     </view>
                     <connections>
+                        <outlet property="livesLabel" destination="hFg-N4-SRG" id="lnL-Zb-SU1"/>
+                        <outlet property="pointsLabel" destination="wo2-j8-BSl" id="Qgq-Gc-179"/>
                         <outlet property="sceneView" destination="Nep-wc-PhQ" id="Rai-St-ChU"/>
+                        <outlet property="startButton" destination="0xU-4X-bjh" id="Ut2-Ks-0Cz"/>
                     </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="dkx-z0-nzr" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="136.80000000000001" y="133.5832083958021"/>
+            <point key="canvasLocation" x="135.97122302158274" y="133.27338129496403"/>
         </scene>
     </scenes>
 </document>
